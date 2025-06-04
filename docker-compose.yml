@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    command: gunicorn servermonitor.wsgi:application --bind 0.0.0.0:8000
+    env_file:
+      - backend/.env
+    depends_on:
+      - redis
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+    environment:
+      - PORT=3000
+
+  redis:
+    image: redis:alpine
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/build:/usr/share/nginx/html:ro
+    depends_on:
+      - frontend
+      - backend
